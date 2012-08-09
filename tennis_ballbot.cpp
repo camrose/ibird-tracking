@@ -29,12 +29,19 @@ using namespace std;
 // Note the channels are NOT RGB.
 // Also note that H is in [0, 179] and the rest are [0,255]
 // I-Bird Pink HSV
-#define TARGET_H_LOW        (130)
-#define TARGET_S_LOW        (20) 
-#define TARGET_V_LOW        (80)
-#define TARGET_H_HIGH       (150)
-#define TARGET_S_HIGH       (255)
-#define TARGET_V_HIGH       (255) 
+#define TARGET_H_LOW        (130) //130
+#define TARGET_S_LOW        (20) //20
+#define TARGET_V_LOW        (80) //80
+#define TARGET_H_HIGH       (150) //150
+#define TARGET_S_HIGH       (255) //255
+#define TARGET_V_HIGH       (255) //255
+
+#define TARGET_H_LOW_W        (90)
+#define TARGET_S_LOW_W        (40)
+#define TARGET_V_LOW_W        (150)
+#define TARGET_H_HIGH_W       (110)
+#define TARGET_S_HIGH_W       (180)
+#define TARGET_V_HIGH_W       (200)
 
 // Camera driver config values
 #define CAM_BRIGHTNESS      (0.4)
@@ -61,6 +68,8 @@ Mat cross = getStructuringElement(MORPH_CROSS, Size(5,5));
 RNG rng;
 camera cam;
 VideoWriter record;
+int n = 0;
+char filename[200];
 
 Size roi_size, roiExpansionRate, roiZoomRate;
 Point2d lastBallLocation;
@@ -146,7 +155,7 @@ vector <ballContour> doContours(Mat & input)
     int idx = 0;
     for( ;idx >= 0; idx = hierarchy[idx][0]) {
       double contArea = contourArea(Mat(contours[idx]));
-        if (contArea > 0) {
+        if (contArea > 0) { // used to be 0
           // parameters for ellipse fit onto the contour
           RotatedRect contourEllipse;
           float majorAxis = 0.0, minorAxis = 0.0, area = 0.0,
@@ -155,7 +164,7 @@ vector <ballContour> doContours(Mat & input)
             try {  
               //fit an ellipse to the contour
               //cout << (int) contours[idx].size() << endl;
-              contourEllipse = fitEllipse(Mat(contours[idx])); 
+              contourEllipse = fitEllipse(Mat(contours[idx]));
               majorAxis = contourEllipse.size.height;
               minorAxis = contourEllipse.size.width;
               area = (majorAxis * minorAxis * pi) / 4.0;
@@ -182,6 +191,63 @@ vector <ballContour> doContours(Mat & input)
     }
   }
   return returnCandidates;
+}
+
+vector <ballContour> findWindow(Mat & input)
+{
+  /** Returns a vector of ball candidates' contours
+      found in the given input image.
+      @param
+          input : the source image
+      @return
+          vector of candidate contours
+  */
+  vector<vector<Point> > contours;
+  vector<Vec4i> hierarchy;
+  vector<ballContour> returnWindows;
+  findContours(input, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_NONE);
+  if (!contours.empty() && !hierarchy.empty()) {
+    int idx = 0;
+    for( ;idx >= 0; idx = hierarchy[idx][0]) {
+      double contArea = contourArea(Mat(contours[idx]));
+        if (contArea > 50) { // used to be 0
+          // parameters for ellipse fit onto the contour
+          RotatedRect contourEllipse;
+          float majorAxis = 0.0, minorAxis = 0.0, area = 0.0,
+          delta = 1, r = 3;
+        if( contours[idx].size() >= 6 ) {
+            try {  
+              //fit an ellipse to the contour
+              //cout << (int) contours[idx].size() << endl;
+              //contourEllipse = fitEllipse(Mat(contours[idx])); 
+              contourEllipse = minAreaRect(Mat(contours[idx])); 
+              majorAxis = contourEllipse.size.height;
+              minorAxis = contourEllipse.size.width;
+              //area = (majorAxis * minorAxis * pi) / 4.0;
+              area = (majorAxis * minorAxis);
+            
+              /*filter based on shape:
+               * 1. calculate delta = |contour_area - ellipse_area|/contour_area
+               * 2. r = Major_axis/Minor_axis
+               *
+               *  for circular ball, we expect: delta -->0(+) && r --> 1(+)
+               */
+              delta = (abs(contArea - area))/contArea;
+              r = majorAxis/minorAxis;
+            }
+          catch (...) {continue;}
+        }
+    
+        //if (delta < 0.7) { //&& r<3
+          ballContour windows;
+          windows.contour = contours[idx];
+          windows.pixelPosition = contourEllipse.center;
+          returnWindows.push_back(windows);
+        //}
+      }
+    }
+  }
+  return returnWindows;
 }
 
 bool withinBounds(int n, int m, int nMax, int mMax) {
@@ -245,12 +311,20 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
 
     //Mat ballFound = Mat(frame.size(), frame.type());
 
+    Mat windowRangeMask(frame.size(), frame.type());
+    Mat birdRangeMask(frame.size(), frame.type());
+
     //Color filtering
     cvtColor(frame, frameHSV, CV_RGB2HSV);
     inRange(frameHSV,
           Scalar(TARGET_H_LOW, TARGET_S_LOW, TARGET_V_LOW, 0),
           Scalar(TARGET_H_HIGH, TARGET_S_HIGH, TARGET_V_HIGH, 0),
           colorRangeMask);
+    inRange(frameHSV,
+          Scalar(TARGET_H_LOW_W, TARGET_S_LOW_W, TARGET_V_LOW_W, 0),
+          Scalar(TARGET_H_HIGH_W, TARGET_S_HIGH_W, TARGET_V_HIGH_W, 0),
+          windowRangeMask);
+    //bitwise_or(birdRangeMask, windowRangeMask, colorRangeMask);
   //pyrMeanShiftFiltering(colorRangeMask, dst, 4, 20, 2);
 #if DISPLAY_PIPELINE
     imshow("Color Filtered", colorRangeMask);
@@ -265,32 +339,44 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
   // Erode and Dilate
   //erode(colorRangeMask,colorRangeMask,cross,Point(-1,-1), ERODE_LEVEL);
 #if DISPLAY_PIPELINE
-    imshow("Eroded", colorRangeMask);
+    //imshow("Eroded", colorRangeMask);
 #endif
 
   //dilate(colorRangeMask,colorRangeMask,cross,Point(-1,-1),DILATE_LEVEL);
 #if DISPLAY_PIPELINE
-    imshow("Erode + Dilate", colorRangeMask);
+    //imshow("Erode + Dilate", colorRangeMask);
 #endif
-
+    
     Vector<ballContour> candidates = doContours(colorRangeMask);
 
-    if(candidates.empty()) { 
+    if(candidates.empty()) {
+        Vector<ballContour> window = findWindow(windowRangeMask);
+        if (!window.empty()) {
+            ellipse( frame, window[0].pixelPosition, Size(10,10),
+                0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
+        }
 #if DISPLAY_PIPELINE
     imshow("Result", frame);
 #endif
     } else {
 
-        unsigned int i;
-        for(i = 0; i < candidates.size(); i++) {
-            //printf("Ball %d found at %d, %d\n", i, candidates[i].pixelPosition.x, candidates[i].pixelPosition.y);
-            printf("#%d,%d\n",candidates[i].pixelPosition.x, candidates[i].pixelPosition.y);
+        int bx = candidates[0].pixelPosition.x;
+        int by = candidates[0].pixelPosition.y;
+
+        ellipse( frame, candidates[0].pixelPosition, Size(10,10),
+                0, 0, 360, Scalar(0,0,255), CV_FILLED, 8, 0);
+
+        Vector<ballContour> window = findWindow(windowRangeMask);
+        if (!window.empty()) {
+            printf("#%d,%d,%d,%d\n",bx, by, window[0].pixelPosition.x, window[0].pixelPosition.y);
+            ellipse( frame, window[0].pixelPosition, Size(10,10),
+                0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
         }
+        
+
 
 #if DISPLAY_PIPELINE
-        ellipse( frame, candidates[0].pixelPosition, Size(10,10),
-            0, 0, 360, Scalar(0,0,255), CV_FILLED, 8, 0);
-        imshow("Result", frame);
+    imshow("Result", frame);
 #endif
     }
 
