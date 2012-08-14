@@ -71,8 +71,8 @@ if __name__ == '__main__':
                 y = int(components[1])
                 x = int(components[0])
                 #wx = int(components[2])
-                wx = 152;
-                wy = 152;
+                wx = 160;
+                wy = 120;
                 #wy = int(components[3])
                 #if (abs(yaw_offset) > 1.7):
                 #        yaw_offset = 0

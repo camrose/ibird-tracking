@@ -29,12 +29,19 @@ using namespace std;
 // Note the channels are NOT RGB.
 // Also note that H is in [0, 179] and the rest are [0,255]
 // I-Bird Pink HSV
-#define TARGET_H_LOW        (130) //130
-#define TARGET_S_LOW        (50) //20
-#define TARGET_V_LOW        (90) //80
-#define TARGET_H_HIGH       (150) //150
-#define TARGET_S_HIGH       (255) //255
-#define TARGET_V_HIGH       (255) //255
+#define TARGET_H_LOW_P        (130) //130
+#define TARGET_S_LOW_P        (50) //20
+#define TARGET_V_LOW_P        (90) //80
+#define TARGET_H_HIGH_P       (150) //150
+#define TARGET_S_HIGH_P       (255) //255
+#define TARGET_V_HIGH_P       (255) //255
+
+#define TARGET_H_LOW_G        (24) //130
+#define TARGET_S_LOW_G        (55) //20
+#define TARGET_V_LOW_G        (88) //80
+#define TARGET_H_HIGH_G       (68) //150
+#define TARGET_S_HIGH_G       (255) //255
+#define TARGET_V_HIGH_G       (255) //255
 
 #define TARGET_H_LOW_W        (90)
 #define TARGET_S_LOW_W        (60)
@@ -50,7 +57,7 @@ using namespace std;
 #define CAM_GAIN            (1.0)
 
 #define ERODE_LEVEL         (1)
-#define DILATE_LEVEL        (1)
+#define DILATE_LEVEL        (8)
 
 // ====== Static Variables ============
 const double pi = 3.141592654;
@@ -312,14 +319,25 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
     //Mat ballFound = Mat(frame.size(), frame.type());
 
     Mat windowRangeMask(frame.size(), frame.type());
-    Mat birdRangeMask(frame.size(), frame.type());
+    Mat pinkRangeMask(frame.size(), frame.type());
+    Mat greenRangeMask(frame.size(), frame.type());
 
     //Color filtering
     cvtColor(frame, frameHSV, CV_RGB2HSV);
     inRange(frameHSV,
-          Scalar(TARGET_H_LOW, TARGET_S_LOW, TARGET_V_LOW, 0),
-          Scalar(TARGET_H_HIGH, TARGET_S_HIGH, TARGET_V_HIGH, 0),
-          colorRangeMask);
+          Scalar(TARGET_H_LOW_P, TARGET_S_LOW_P, TARGET_V_LOW_P, 0),
+          Scalar(TARGET_H_HIGH_P, TARGET_S_HIGH_P, TARGET_V_HIGH_P, 0),
+          pinkRangeMask);
+    inRange(frameHSV,
+          Scalar(TARGET_H_LOW_G, TARGET_S_LOW_G, TARGET_V_LOW_G, 0),
+          Scalar(TARGET_H_HIGH_G, TARGET_S_HIGH_G, TARGET_V_HIGH_G, 0),
+          greenRangeMask);
+
+    dilate(pinkRangeMask,pinkRangeMask,cross,Point(-1,-1),DILATE_LEVEL);
+    dilate(greenRangeMask,greenRangeMask,cross,Point(-1,-1),DILATE_LEVEL);
+    
+    bitwise_and(pinkRangeMask,greenRangeMask,colorRangeMask);
+
     /*inRange(frameHSV,
           Scalar(TARGET_H_LOW_W, TARGET_S_LOW_W, TARGET_V_LOW_W, 0),
           Scalar(TARGET_H_HIGH_W, TARGET_S_HIGH_W, TARGET_V_HIGH_W, 0),
@@ -355,7 +373,7 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
             ellipse( frame, window[0].pixelPosition, Size(10,10),
                 0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
         }*/
-        ellipse( frame, Point(152,152), Size(10,10),
+        ellipse( frame, Point(160,120), Size(10,10),
                 0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
 #if DISPLAY_PIPELINE
     imshow("Result", frame);
@@ -381,7 +399,7 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
                 0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
         }*/
         
-        ellipse( frame, Point(152,152), Size(10,10),
+        ellipse( frame, Point(160,120), Size(10,10),
                 0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
         printf("#%d,%d,%d,%d\n",bx, by, 0, 0);
 
