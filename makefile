@@ -9,5 +9,8 @@ tennis_ballbot: tennis_ballbot.cpp
 tennis_ballbot_debug: tennis_ballbot.cpp 
 	gcc $(CFLAGS) -o $@ $< camera.cpp $(LDFLAGS) -lm -lstdc++ -fno-omit-frame-pointer -O3
 
+camera_tune: camera_tune.cpp
+	gcc $(CFLAGS) -o $@ $< camera.cpp $(LDFLAGS) -lm -lstdc++ -O3
+
 clean:
 	rm -f tennis_ballbot tennis_ballbot_debug

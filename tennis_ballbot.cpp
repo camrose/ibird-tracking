@@ -23,21 +23,21 @@ using namespace std;
 
 #define DISPLAY_CAPTURE             0 // Display camera capture
 #define DISPLAY_PIPELINE            1 // Display all steps of pipeline
-#define RECORD                      1 // Record video
+#define RECORD                      0 // Record video
 #define VERBOSE                     1 // Lots of printing
 
 // Note the channels are NOT RGB.
 // Also note that H is in [0, 179] and the rest are [0,255]
 // I-Bird Pink HSV
 #define TARGET_H_LOW        (130) //130
-#define TARGET_S_LOW        (20) //20
-#define TARGET_V_LOW        (80) //80
+#define TARGET_S_LOW        (50) //20
+#define TARGET_V_LOW        (90) //80
 #define TARGET_H_HIGH       (150) //150
 #define TARGET_S_HIGH       (255) //255
 #define TARGET_V_HIGH       (255) //255
 
 #define TARGET_H_LOW_W        (90)
-#define TARGET_S_LOW_W        (40)
+#define TARGET_S_LOW_W        (60)
 #define TARGET_V_LOW_W        (150)
 #define TARGET_H_HIGH_W       (110)
 #define TARGET_S_HIGH_W       (180)
@@ -181,12 +181,12 @@ vector <ballContour> doContours(Mat & input)
           catch (...) {continue;}
         }
     
-        if (r < 3 && delta < 0.7) {
+        //if (delta < 1.2) {
           ballContour candidate;
           candidate.contour = contours[idx];
           candidate.pixelPosition = contourEllipse.center;
           returnCandidates.push_back(candidate);
-        }
+        //}
       }
     }
   }
@@ -320,10 +320,10 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
           Scalar(TARGET_H_LOW, TARGET_S_LOW, TARGET_V_LOW, 0),
           Scalar(TARGET_H_HIGH, TARGET_S_HIGH, TARGET_V_HIGH, 0),
           colorRangeMask);
-    inRange(frameHSV,
+    /*inRange(frameHSV,
           Scalar(TARGET_H_LOW_W, TARGET_S_LOW_W, TARGET_V_LOW_W, 0),
           Scalar(TARGET_H_HIGH_W, TARGET_S_HIGH_W, TARGET_V_HIGH_W, 0),
-          windowRangeMask);
+          windowRangeMask);*/
     //bitwise_or(birdRangeMask, windowRangeMask, colorRangeMask);
   //pyrMeanShiftFiltering(colorRangeMask, dst, 4, 20, 2);
 #if DISPLAY_PIPELINE
@@ -350,11 +350,13 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
     Vector<ballContour> candidates = doContours(colorRangeMask);
 
     if(candidates.empty()) {
-        Vector<ballContour> window = findWindow(windowRangeMask);
+        /*Vector<ballContour> window = findWindow(windowRangeMask);
         if (!window.empty()) {
             ellipse( frame, window[0].pixelPosition, Size(10,10),
                 0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
-        }
+        }*/
+        ellipse( frame, Point(152,152), Size(10,10),
+                0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
 #if DISPLAY_PIPELINE
     imshow("Result", frame);
 #endif
@@ -362,17 +364,26 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
 
         int bx = candidates[0].pixelPosition.x;
         int by = candidates[0].pixelPosition.y;
+        
+        /*unsigned int i;
+        for(i=0; i < candidates.size(); i++) {
+            ellipse( frame, candidates[i].pixelPosition, Size(10,10),
+                    0, 0, 360, Scalar(255,0,0), CV_FILLED, 8, 0);
+        }*/
 
         ellipse( frame, candidates[0].pixelPosition, Size(10,10),
-                0, 0, 360, Scalar(0,0,255), CV_FILLED, 8, 0);
+                    0, 0, 360, Scalar(0,0,255), CV_FILLED, 8, 0);
 
-        Vector<ballContour> window = findWindow(windowRangeMask);
+        /*Vector<ballContour> window = findWindow(windowRangeMask);
         if (!window.empty()) {
             printf("#%d,%d,%d,%d\n",bx, by, window[0].pixelPosition.x, window[0].pixelPosition.y);
             ellipse( frame, window[0].pixelPosition, Size(10,10),
                 0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
-        }
+        }*/
         
+        ellipse( frame, Point(152,152), Size(10,10),
+                0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
+        printf("#%d,%d,%d,%d\n",bx, by, 0, 0);
 
 
 #if DISPLAY_PIPELINE

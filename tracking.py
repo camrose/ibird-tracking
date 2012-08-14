@@ -70,21 +70,28 @@ if __name__ == '__main__':
             #    print components
                 y = int(components[1])
                 x = int(components[0])
-                wx = int(components[2])
-                wy = int(components[3])
-                if (abs(yaw_offset) > 1.7):
-                        yaw_offset = 0
+                #wx = int(components[2])
+                wx = 152;
+                wy = 152;
+                #wy = int(components[3])
+                #if (abs(yaw_offset) > 1.7):
+                #        yaw_offset = 0
                 if y < wy:
             #        #kbint.process('[')
-                    comm.setRegulatorOffsets((yaw_offset, 0.0, 0.8))
+                    comm.setRegulatorOffsets((yaw_offset, 0.0, 0.9))
+                    #comm.setGlobalRateSlew((yaw_offset, 0.0, 0.0))
                 elif y > wy:
             #        #kbint.process(']')
                     comm.setRegulatorOffsets((yaw_offset, 0.0, 1.0))
+                    #comm.setGlobalRateSlew((yaw_offset, 0.0, 0.0))
                 yaw_error_pixel = wx - x;
+                #if (yaw_error_pixel < 20):
+                #    comm.zeroEstimate()
+                #    comm.setRegulatorRef((1.0,0.0,0.0,0.0))
                 yaw_error_rad = (60.0/320.0)*0.0174533*yaw_error_pixel;
-                yaw_offset = 2.0*yaw_error_rad;
+                yaw_offset = 4.0*yaw_error_rad;
                 print str(x) + "," + str(y) + "," + str(wx) + "," + str(wy)
-                print str(yaw_offset) + "," + str(yaw_error_rad) + "," + str(yaw_error_pixel)
+                #print str(yaw_offset) + "," + str(yaw_error_rad) + "," + str(yaw_error_pixel)
                 #comm.rotateRefGlobal(quatGenerate(yaw_offset, (0,0,1)))
             time.sleep(0.02)
 

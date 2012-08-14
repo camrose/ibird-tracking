@@ -40,7 +40,7 @@ cv::Point3d get_camera_world_coordinates(cv::Point3d real_world_position,
 	 * Arguments:
 	 *
 	 * real_world_position  : is the 3D position of a point in world frame
-	 * camera_position      : is the 3D positi6on of the camera in the world frame
+	 * camera_position      : is the 3D position of the camera in the world frame
 	 * heading 	        : the heading of the robot
 	 * pan			: pan angle of the camera
 	 * tilt			: tilt angle of the camera
