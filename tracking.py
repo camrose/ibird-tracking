@@ -75,32 +75,21 @@ if __name__ == '__main__':
                 y = int(components[1])
                 x = int(components[0])
                 #wx = int(components[2])
-                wx = 160;
-                wy = 120;
+                wx = 160
+                wy = 120
                 
                 #wy = int(components[3])
-                #if (abs(yaw_offset) > 1.7):
-                #        yaw_offset = 0
                 if y < wy:
-            #        #kbint.process('[')
                     comm.setRegulatorOffsets((yaw_offset, 0.0, 1.0))
-                    #comm.setGlobalRateSlew((yaw_offset, 0.0, 0.0))
                 elif y > wy:
-            #        #kbint.process(']')
                     comm.setRegulatorOffsets((yaw_offset, 0.0, 1.0))
-                    #comm.setGlobalRateSlew((yaw_offset, 0.0, 0.0))
                 yaw_error_pixel = wx - x;
-                #if (yaw_error_pixel < 20):
-                #    comm.zeroEstimate()
-                #    comm.setRegulatorRef((1.0,0.0,0.0,0.0))
-                yaw_error_rad = (60.0/320.0)*0.0174533*yaw_error_pixel;
-                yaw_offset = 4.0*yaw_error_rad;
+                yaw_error_rad = (60.0/320.0)*0.0174533*yaw_error_pixel
+                yaw_offset = 4.0*yaw_error_rad
                 print str(x) + "," + str(y) + "," + str(wx) + "," + str(wy)
-                #print str(yaw_offset) + "," + str(yaw_error_rad) + "," + str(yaw_error_pixel)
-                #comm.rotateRefGlobal(quatGenerate(yaw_offset, (0,0,1)))
                 end_time = datetime.now()
                 round_time = end_time - start_time
-		dt = round_time.microseconds/1000.0
+                dt = round_time.microseconds/1000.0
                 pixel_pos.append([dt,x,y,wx,wy,yaw_error_pixel,yaw_error_rad,yaw_offset])
             time.sleep(0.02)
 
@@ -108,15 +97,14 @@ if __name__ == '__main__':
         print e
 
     finally:
-        
         today = datetime.today()
-	d = str(today.year) + "_" + str(today.month) + "_" + str(today.day)
-	t = str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
-	fname = 'TrackingOutput-' + d + '-' + t + '.txt'
-	record_log = open(fname, 'w')
+        d = str(today.year) + "_" + str(today.month) + "_" + str(today.day)
+        t = str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
+        fname = 'TrackingOutput-' + d + '-' + t + '.txt'
+        record_log = open(fname, 'w')
         record_log.write("Time\tBird X\tBird Y\tWindow X\tWindow Y\tPixel" +
                          "Error\tYaw Rad Error\tYaw Offset\n")
-        for i in pixel_pos.shape[0]
+        for i in range(len(pixel_pos)):
             record_log.write(str(pixel_pos[i][0]) + "\t" + str(pixel_pos[i][1]) +
                              "\t" + str(pixel_pos[i][2]) + "\t" + str(pixel_pos[i][3]) +
                              "\t" + str(pixel_pos[i][4]) + "\t" + str(pixel_pos[i][5]) +
