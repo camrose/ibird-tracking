@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, subprocess, time, tempfile, threading, tty
+import sys, subprocess, time, tempfile, threading, tty, datetime
 from pythonlib.lib.command_interface import CommandInterface
 from pythonlib.keyboardWireLinux import KeyboardInterface
 from pythonlib.lib.xbee_manager import XBeeManager
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     # I-Bird preflight initialization
     try:
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
         yaw_offset = 0.0
         while True:
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                 yaw_error_rad = (60.0/320.0)*0.0174533*yaw_error_pixel
                 yaw_offset = 4.0*yaw_error_rad
                 print str(x) + "," + str(y) + "," + str(wx) + "," + str(wy)
-                end_time = datetime.now()
+                end_time = datetime.datetime.now()
                 round_time = end_time - start_time
                 dt = round_time.microseconds/1000.0
                 pixel_pos.append([dt,x,y,wx,wy,yaw_error_pixel,yaw_error_rad,yaw_offset])
@@ -97,7 +97,7 @@ if __name__ == '__main__':
         print e
 
     finally:
-        today = datetime.today()
+        today = datetime.datetime.today()
         d = str(today.year) + "_" + str(today.month) + "_" + str(today.day)
         t = str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
         fname = 'TrackingOutput-' + d + '-' + t + '.txt'

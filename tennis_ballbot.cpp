@@ -21,7 +21,7 @@ using namespace std;
 
 
 #define DISPLAY_CAPTURE             0 // Display camera capture
-#define DISPLAY_PIPELINE            1 // Display all steps of pipeline
+#define DISPLAY_PIPELINE            0 // Display all steps of pipeline
 #define RECORD                      0 // Record video
 #define VERBOSE                     1 // Lots of printing
 
@@ -436,8 +436,8 @@ int main( int argc, char** argv ) {
   //cap.set(CV_CAP_PROP_HUE, CAM_HUE); // Doesn't exist for our camera
   cap.set(CV_CAP_PROP_GAIN, CAM_GAIN);
   //cap.set(CV_CAP_PROP_EXPOSURE, CAM_EXPOSURE); // Not supported
-  cap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-  cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+  cap.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+  cap.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
   cap.set(CV_CAP_PROP_FPS, 30);
   cap.set(CV_CAP_PROP_FORMAT, 0);
 //  cap.set(CV_CAP_PROP_FOURCC, 0);
