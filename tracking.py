@@ -24,6 +24,9 @@ xb = None
 
 if __name__ == '__main__':
 
+    pixel_pos = []
+    row = 0;
+    
     print "Beginning initialization..."
 
     # Initialize xbee radio 
@@ -55,6 +58,7 @@ if __name__ == '__main__':
 
     # I-Bird preflight initialization
     try:
+        start_time = datetime.now()
         yaw_offset = 0.0
         while True:
 
@@ -73,6 +77,7 @@ if __name__ == '__main__':
                 #wx = int(components[2])
                 wx = 160;
                 wy = 120;
+                
                 #wy = int(components[3])
                 #if (abs(yaw_offset) > 1.7):
                 #        yaw_offset = 0
@@ -93,13 +98,31 @@ if __name__ == '__main__':
                 print str(x) + "," + str(y) + "," + str(wx) + "," + str(wy)
                 #print str(yaw_offset) + "," + str(yaw_error_rad) + "," + str(yaw_error_pixel)
                 #comm.rotateRefGlobal(quatGenerate(yaw_offset, (0,0,1)))
+                end_time = datetime.now()
+                round_time = end_time - start_time
+		dt = round_time.microseconds/1000.0
+                pixel_pos.append([dt,x,y,wx,wy,yaw_error_pixel,yaw_error_rad,yaw_offset])
             time.sleep(0.02)
 
     except Exception as e:
         print e
 
     finally:
-
+        
+        today = datetime.today()
+	d = str(today.year) + "_" + str(today.month) + "_" + str(today.day)
+	t = str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
+	fname = 'TrackingOutput-' + d + '-' + t + '.txt'
+	record_log = open(fname, 'w')
+        record_log.write("Time\tBird X\tBird Y\tWindow X\tWindow Y\tPixel" +
+                         "Error\tYaw Rad Error\tYaw Offset\n")
+        for i in pixel_pos.shape[0]
+            record_log.write(str(pixel_pos[i][0]) + "\t" + str(pixel_pos[i][1]) +
+                             "\t" + str(pixel_pos[i][2]) + "\t" + str(pixel_pos[i][3]) +
+                             "\t" + str(pixel_pos[i][4]) + "\t" + str(pixel_pos[i][5]) +
+                             "\t" + str(pixel_pos[i][6]) + "\t" + str(pixel_pos[i][7]) + "\n")
+	
+	
         # Clean up
         kbint.process('1') # Stop flight
         tracking.terminate()
