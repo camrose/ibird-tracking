@@ -6,8 +6,7 @@
  */
 
 #include <X11/keysym.h>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -227,7 +226,7 @@ vector <ballContour> findWindow(Mat & input)
               //fit an ellipse to the contour
               //cout << (int) contours[idx].size() << endl;
               //contourEllipse = fitEllipse(Mat(contours[idx])); 
-              contourEllipse = minAreaRect(Mat(contours[idx])); 
+              contourEllipse = minAreaRect(Mat(contours[idx]));
               majorAxis = contourEllipse.size.height;
               minorAxis = contourEllipse.size.width;
               //area = (majorAxis * minorAxis * pi) / 4.0;
@@ -424,7 +423,7 @@ int main( int argc, char** argv ) {
   double cam_brightness, cam_contrast, cam_saturation, cam_gain;
 
   // Open and configure camera
-  VideoCapture cap(1);
+  VideoCapture cap(0);
   if( !cap.isOpened() ) {
     cout << "Camera open failed." << endl;
     return -1;
@@ -437,11 +436,11 @@ int main( int argc, char** argv ) {
   //cap.set(CV_CAP_PROP_HUE, CAM_HUE); // Doesn't exist for our camera
   cap.set(CV_CAP_PROP_GAIN, CAM_GAIN);
   //cap.set(CV_CAP_PROP_EXPOSURE, CAM_EXPOSURE); // Not supported
-  cap.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-  cap.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
-//  cap.set(CV_CAP_PROP_FPS, 30);
-//  cap.set(CV_CAP_PROP_FORMAT, 0);
-//  cap.set(CV_CAP_PROP_FOURCC, "UYUV");
+  cap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+  cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+  cap.set(CV_CAP_PROP_FPS, 30);
+  cap.set(CV_CAP_PROP_FORMAT, 0);
+//  cap.set(CV_CAP_PROP_FOURCC, 0);
 
   // Get camera parameters to make sure they were set correctly
   frame_size = Size(cap.get(CV_CAP_PROP_FRAME_WIDTH), cap.get(CV_CAP_PROP_FRAME_HEIGHT));

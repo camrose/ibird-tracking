@@ -78,7 +78,7 @@ if __name__ == '__main__':
                 #        yaw_offset = 0
                 if y < wy:
             #        #kbint.process('[')
-                    comm.setRegulatorOffsets((yaw_offset, 0.0, 0.9))
+                    comm.setRegulatorOffsets((yaw_offset, 0.0, 1.0))
                     #comm.setGlobalRateSlew((yaw_offset, 0.0, 0.0))
                 elif y > wy:
             #        #kbint.process(']')
