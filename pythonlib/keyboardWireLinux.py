@@ -93,14 +93,18 @@ class KeyboardInterface(object):
             # self.yaw.decrease()
             # self.ref_changed = True
             # self.comm.rotateRefGlobal(quatGenerate(radians(-10), (0,0,1)))
-            self.yaw_rate.decrease()                
-            self.rate_changed = True
+            # self.yaw_rate.decrease()                
+            # self.rate_changed = True
+            self.steer.decrease()
+            self.offsets_changed = True
         elif c == 'd':
             # self.yaw.increase()
             # self.ref_changed = True
             # self.comm.rotateRefGlobal(quatGenerate(radians(10), (0,0,1)))
-            self.yaw_rate.increase()            
-            self.rate_changed = True
+            # self.yaw_rate.increase()            
+            # self.rate_changed = True
+            self.steer.increase()
+            self.offsets_changed = True
         elif c == 'q':
             self.roll.increase()
             self.ref_changed = True

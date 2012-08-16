@@ -54,21 +54,29 @@ if __name__ == '__main__':
     kbint = KeyboardInterface(comm)
     
     # Pipe the output from the process so we can read out the bird location
-    tracking = subprocess.Popen(args = './tennis_ballbot', shell = False, stdout = subprocess.PIPE)
+    #tracking = subprocess.Popen(args = './tennis_ballbot', shell = False, stdout = subprocess.PIPE)
 
     # I-Bird preflight initialization
+    line_open = 0
     try:
+        process = 1
         start_time = datetime.datetime.now()
         yaw_offset = 0.0
-        while True:
+        while process:
 
             if kbmon.hasKey():
                 c = kbmon.getCh()
                 if c == 'q':
-                    break               
+                    process = 0
+                    break
+                if c == 'm':
+                    tracking = subprocess.Popen(args = './tennis_ballbot', shell = False, stdout = subprocess.PIPE)
+                    line_open = 1;              
                 kbint.process(c)
-
-            line = tracking.stdout.readline()
+            if line_open == 1:
+                line = tracking.stdout.readline()
+            else:
+                line = ''
             if line != '' and line[0] == '#':
                 components = line[1:-1].split(',')
             #    print components
@@ -80,16 +88,22 @@ if __name__ == '__main__':
                 
                 #wy = int(components[3])
                 if y < wy:
-                    comm.setRegulatorOffsets((yaw_offset, 0.0, 1.0))
-                elif y > wy:
-                    comm.setRegulatorOffsets((yaw_offset, 0.0, 1.0))
+                   comm.setRegulatorOffsets((yaw_offset, 0.0, 0.8))
+                   # comm.rotateRefGlobal(quatGenerate(radians(yaw_offset), (0,0,1)))
+                elif y >= wy:
+                   # comm.rotateRefGlobal(quatGenerate(radians(yaw_offset), (0,0,1)))
+                   comm.setRegulatorOffsets((yaw_offset, 0.0, 1.0))
                 yaw_error_pixel = wx - x;
                 yaw_error_rad = (60.0/320.0)*0.0174533*yaw_error_pixel
-                yaw_offset = 4.0*yaw_error_rad
+                yaw_offset = -3.0*yaw_error_rad
+                #if yaw_offset < 0:
+                #    yaw_offset = -1
+                #else:
+                #    yaw_offset = 1
                 print str(x) + "," + str(y) + "," + str(wx) + "," + str(wy)
                 end_time = datetime.datetime.now()
                 round_time = end_time - start_time
-                dt = round_time.microseconds/1000.0
+                dt = round_time.seconds/1.0 + round_time.microseconds/1000000.0
                 pixel_pos.append([dt,x,y,wx,wy,yaw_error_pixel,yaw_error_rad,yaw_offset])
             time.sleep(0.02)
 
@@ -109,11 +123,11 @@ if __name__ == '__main__':
                              "\t" + str(pixel_pos[i][2]) + "\t" + str(pixel_pos[i][3]) +
                              "\t" + str(pixel_pos[i][4]) + "\t" + str(pixel_pos[i][5]) +
                              "\t" + str(pixel_pos[i][6]) + "\t" + str(pixel_pos[i][7]) + "\n")
-	
-	
+
         # Clean up
         kbint.process('1') # Stop flight
-        tracking.terminate()
+        if line_open == 1:
+          tracking.terminate()
         comm.close()
         #kbint.close()
         kbmon.close()

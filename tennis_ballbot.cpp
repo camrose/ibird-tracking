@@ -22,7 +22,7 @@ using namespace std;
 
 #define DISPLAY_CAPTURE             0 // Display camera capture
 #define DISPLAY_PIPELINE            0 // Display all steps of pipeline
-#define RECORD                      0 // Record video
+#define RECORD                      1 // Record video
 #define VERBOSE                     1 // Lots of printing
 
 // Note the channels are NOT RGB.
@@ -56,7 +56,7 @@ using namespace std;
 #define CAM_GAIN            (1.0)
 
 #define ERODE_LEVEL         (1)
-#define DILATE_LEVEL        (8)
+#define DILATE_LEVEL        (3)
 
 // ====== Static Variables ============
 const double pi = 3.141592654;
@@ -79,6 +79,8 @@ char filename[200];
 
 Size roi_size, roiExpansionRate, roiZoomRate;
 Point2d lastBallLocation;
+
+vector<Mat> frames;
 
 // ====== Function Declarations =======
 int searchFrame(Mat &frame, Mat &temp, Mat &dest);
@@ -409,7 +411,7 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
     }
 
 #if RECORD
-  record << (frame);
+  //record << (frame);
 #endif
 
   return 0;
@@ -465,7 +467,7 @@ int main( int argc, char** argv ) {
     return -1;
   }
 #endif
-
+  int stop = 0;
   double framerate;
   clock_t prev_time, new_time;
     
@@ -484,6 +486,7 @@ int main( int argc, char** argv ) {
     new_time = clock();
     framerate = CLOCKS_PER_SEC/((float)(new_time - prev_time));
     prev_time = new_time;
+    
 
 #if VERBOSE
     cout << "Framerate: " << framerate << "\n";
@@ -492,12 +495,36 @@ int main( int argc, char** argv ) {
 #endif
  
     processNewFrame( frame, frameHSV, colorRangeMask );
-    if(waitKey(5) == (0x100000 + 'q')) {
+    //if(waitKey(5) == (0x100000 + 'q')) {
+    int c = waitKey(5);
+    printf("c = %d\n", c);
+    if(c != -1) {
         break;
     }
+    
+#if RECORD
+    frames.push_back(*(new Mat));
+    frame.copyTo(frames[frames.size()-1]);
+#endif
+    /*if(frames.size() > 1) {
+      printf("frame pointers = %d", frames[frames.size()-2]);
+    }*/
+    stop++;
+#if RECORD
+    if(stop > 80) {
+      break;
+    }
+#endif
   }
   
   cap.release();
+ 
+#if RECORD
+  unsigned int i=0;
+  for (i=0; i < frames.size(); i++) {
+    record << (frames[i]);
+  }
+#endif
 
   return 0;
 
