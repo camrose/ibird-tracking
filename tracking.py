@@ -87,11 +87,9 @@ if __name__ == '__main__':
                 
                 wy = int(components[3])
                 if y < wy:
-                   #comm.setTempRot(quatGenerate(yaw_offset, (0,0,1)))
                    comm.setRegulatorRef( eulerToQuaternionDeg( yaw_offset/0.0174533, kbint.pitch.value(), 0.0 ) )
                    comm.setRegulatorOffsets((0.0, 0.0, 0.8))
                 elif y >= wy:
-                   #comm.setTempRot(quatGenerate(yaw_offset, (0,0,1)))
                    comm.setRegulatorRef( eulerToQuaternionDeg( yaw_offset/0.0174533, kbint.pitch.value(), 0.0 ) )
                    comm.setRegulatorOffsets((0.0, 0.0, 1.0))
                 yaw_error_pixel = wx - x;

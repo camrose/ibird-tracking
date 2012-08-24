@@ -2,7 +2,7 @@
  * tennis_ballbot.cpp
  *
  *  Created on: Sep 09, 2011
- *      Author: ankush, ryanjulian, hhu
+ *      Author: ankush, ryanjulian, hhu, camrose
  */
 
 #include <X11/keysym.h>
@@ -172,35 +172,17 @@ vector <ballContour> doContours(Mat & input)
         if (contArea > 0) { // used to be 0
           // parameters for ellipse fit onto the contour
           RotatedRect contourEllipse;
-          float majorAxis = 0.0, minorAxis = 0.0, area = 0.0,
-          delta = 1, r = 3;
         if( contours[idx].size() >= 6 ) {
-            try {  
-              //fit an ellipse to the contour
-              //cout << (int) contours[idx].size() << endl;
+            try {
               contourEllipse = fitEllipse(Mat(contours[idx]));
-              majorAxis = contourEllipse.size.height;
-              minorAxis = contourEllipse.size.width;
-              area = (majorAxis * minorAxis * pi) / 4.0;
-            
-              /*filter based on shape:
-               * 1. calculate delta = |contour_area - ellipse_area|/contour_area
-               * 2. r = Major_axis/Minor_axis
-               *
-               *  for circular ball, we expect: delta -->0(+) && r --> 1(+)
-               */
-              delta = (abs(contArea - area))/contArea;
-              r = majorAxis/minorAxis;
             }
           catch (...) {continue;}
         }
     
-        //if (delta < 1.2) {
-          ballContour candidate;
-          candidate.contour = contours[idx];
-          candidate.pixelPosition = contourEllipse.center;
-          returnCandidates.push_back(candidate);
-        //}
+        ballContour candidate;
+        candidate.contour = contours[idx];
+        candidate.pixelPosition = contourEllipse.center;
+        returnCandidates.push_back(candidate);
       }
     }
   }
@@ -224,40 +206,19 @@ vector <ballContour> findWindow(Mat & input)
     int idx = 0;
     for( ;idx >= 0; idx = hierarchy[idx][0]) {
       double contArea = contourArea(Mat(contours[idx]));
-        if (contArea > 50) { // used to be 0
+        if (contArea > 50) {
           // parameters for ellipse fit onto the contour
           RotatedRect contourEllipse;
-          float majorAxis = 0.0, minorAxis = 0.0, area = 0.0,
-          delta = 1, r = 3;
         if( contours[idx].size() >= 6 ) {
             try {  
-              //fit an ellipse to the contour
-              //cout << (int) contours[idx].size() << endl;
-              //contourEllipse = fitEllipse(Mat(contours[idx])); 
               contourEllipse = minAreaRect(Mat(contours[idx]));
-              majorAxis = contourEllipse.size.height;
-              minorAxis = contourEllipse.size.width;
-              //area = (majorAxis * minorAxis * pi) / 4.0;
-              area = (majorAxis * minorAxis);
-            
-              /*filter based on shape:
-               * 1. calculate delta = |contour_area - ellipse_area|/contour_area
-               * 2. r = Major_axis/Minor_axis
-               *
-               *  for circular ball, we expect: delta -->0(+) && r --> 1(+)
-               */
-              delta = (abs(contArea - area))/contArea;
-              r = majorAxis/minorAxis;
             }
           catch (...) {continue;}
         }
-    
-        //if (delta < 0.7) { //&& r<3
-          ballContour windows;
-          windows.contour = contours[idx];
-          windows.pixelPosition = contourEllipse.center;
-          returnWindows.push_back(windows);
-        //}
+        ballContour windows;
+        windows.contour = contours[idx];
+        windows.pixelPosition = contourEllipse.center;
+        returnWindows.push_back(windows);
       }
     }
   }
@@ -345,12 +306,6 @@ int searchFrame(Mat &fram, Mat &frameHSV, Mat &colorRangeMask) {
     
     bitwise_and(pinkRangeMask,greenRangeMask,colorRangeMask);
 
-    /*inRange(frameHSV,
-          Scalar(TARGET_H_LOW_W, TARGET_S_LOW_W, TARGET_V_LOW_W, 0),
-          Scalar(TARGET_H_HIGH_W, TARGET_S_HIGH_W, TARGET_V_HIGH_W, 0),
-          windowRangeMask);*/
-    //bitwise_or(birdRangeMask, windowRangeMask, colorRangeMask);
-  //pyrMeanShiftFiltering(colorRangeMask, dst, 4, 20, 2);
 #if DISPLAY_PIPELINE
     imshow("Color Filtered", colorRangeMask);
 #endif
@@ -375,44 +330,23 @@ int searchFrame(Mat &fram, Mat &frameHSV, Mat &colorRangeMask) {
     Vector<ballContour> candidates = doContours(colorRangeMask);
 
     if(candidates.empty()) {
-        /*Vector<ballContour> window = findWindow(windowRangeMask);
-        if (!window.empty()) {
-            ellipse( frame, window[0].pixelPosition, Size(10,10),
-                0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
-        }*/
-        //ellipse( frame, Point(160,120), Size(10,10),
-        //        0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
+        
 #if DISPLAY_PIPELINE
-    //imshow("Result", frame);
+    imshow("Result", frame);
 #endif
     } else {
 
         int bx = candidates[0].pixelPosition.x;
         int by = candidates[0].pixelPosition.y;
-        
-        /*unsigned int i;
-        for(i=0; i < candidates.size(); i++) {
-            ellipse( frame, candidates[i].pixelPosition, Size(10,10),
-                    0, 0, 360, Scalar(255,0,0), CV_FILLED, 8, 0);
-        }*/
 
         ellipse( frame, candidates[0].pixelPosition, Size(10,10),
                     0, 0, 360, Scalar(0,0,255), CV_FILLED, 8, 0);
 
-        /*Vector<ballContour> window = findWindow(windowRangeMask);
-        if (!window.empty()) {
-            printf("#%d,%d,%d,%d\n",bx, by, window[0].pixelPosition.x, window[0].pixelPosition.y);
-            ellipse( frame, window[0].pixelPosition, Size(10,10),
-                0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
-        }*/
-        
-        //ellipse( frame, Point(160,120), Size(10,10),
-        //        0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
         printf("#%d,%d,%d,%d\n",bx, by, target.x, target.y);
 
 
 #if DISPLAY_PIPELINE
-    //imshow("Result", frame);
+    imshow("Result", frame);
 #endif
     }
 
@@ -558,15 +492,6 @@ int main( int argc, char** argv ) {
 #if RECORD
     frames.push_back(*(new Mat));
     frame.copyTo(frames[frames.size()-1]);
-#endif
-    /*if(frames.size() > 1) {
-      printf("frame pointers = %d", frames[frames.size()-2]);
-    }*/
-    stop++;
-#if RECORD
-    /*if(stop > 80) {
-      break;
-    }*/
 #endif
   }
   
