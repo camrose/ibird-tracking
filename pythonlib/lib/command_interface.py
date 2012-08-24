@@ -79,6 +79,13 @@ class CommandInterface(object):
             print "Capturing and setting background frame."
         pld = Payload(data = data_pack, status = 0, type = Commands['SET_BACKGROUND_FRAME'])
         self.tx_callback(dest = self.endpoint_addr, packet = str(pld))
+
+    def setTempRot(self, rotation):
+        data_pack = pack(4*'f', *rotation)
+        if self.debugPrint:
+            print "Applying temporary rotation to reference in global axes: " + str(rotation)
+        pld = Payload(data = data_pack, status = 0, type = Commands['SET_TEMP_ROT'])
+        self.tx_callback(dest = self.endpoint_addr, packet = str(pld))
         
     def setTempRot(self, rotation):
         data_pack = pack(4*'f', *rotation)
