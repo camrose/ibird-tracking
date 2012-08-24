@@ -56,11 +56,12 @@ using namespace std;
 #define CAM_GAIN            (1.0)
 
 #define ERODE_LEVEL         (1)
-#define DILATE_LEVEL        (3)
+#define DILATE_LEVEL        (2)
 
 // ====== Static Variables ============
 const double pi = 3.141592654;
 Mat img;
+Mat frame;
 int ffillMode    = 1;
 int loDiff       = 45;
 int upDiff       = 45;
@@ -68,8 +69,13 @@ int connectivity = 8;
 int isColor      = true;
 bool useMask     = false;
 int newMaskVal   = 255;
+int drag = 0;
+Point top_point = Point(0,0);
+Point bottom_point = Point(0,0);
+Point target = Point(0,0);
 Point2d horizonPt;
 Mat cross = getStructuringElement(MORPH_CROSS, Size(5,5));
+
 
 RNG rng;
 camera cam;
@@ -315,16 +321,16 @@ void processNewFrame(Mat &frame, Mat &temp, Mat &dest) {
   
 }
   
-int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
+int searchFrame(Mat &fram, Mat &frameHSV, Mat &colorRangeMask) {
 
     //Mat ballFound = Mat(frame.size(), frame.type());
 
-    Mat windowRangeMask(frame.size(), frame.type());
-    Mat pinkRangeMask(frame.size(), frame.type());
-    Mat greenRangeMask(frame.size(), frame.type());
+    Mat windowRangeMask(fram.size(), fram.type());
+    Mat pinkRangeMask(fram.size(), fram.type());
+    Mat greenRangeMask(fram.size(), fram.type());
 
     //Color filtering
-    cvtColor(frame, frameHSV, CV_RGB2HSV);
+    cvtColor(fram, frameHSV, CV_RGB2HSV);
     inRange(frameHSV,
           Scalar(TARGET_H_LOW_P, TARGET_S_LOW_P, TARGET_V_LOW_P, 0),
           Scalar(TARGET_H_HIGH_P, TARGET_S_HIGH_P, TARGET_V_HIGH_P, 0),
@@ -374,10 +380,10 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
             ellipse( frame, window[0].pixelPosition, Size(10,10),
                 0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
         }*/
-        ellipse( frame, Point(160,120), Size(10,10),
-                0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
+        //ellipse( frame, Point(160,120), Size(10,10),
+        //        0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
 #if DISPLAY_PIPELINE
-    imshow("Result", frame);
+    //imshow("Result", frame);
 #endif
     } else {
 
@@ -400,13 +406,13 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
                 0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
         }*/
         
-        ellipse( frame, Point(160,120), Size(10,10),
-                0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
-        printf("#%d,%d,%d,%d\n",bx, by, 0, 0);
+        //ellipse( frame, Point(160,120), Size(10,10),
+        //        0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
+        printf("#%d,%d,%d,%d\n",bx, by, target.x, target.y);
 
 
 #if DISPLAY_PIPELINE
-    imshow("Result", frame);
+    //imshow("Result", frame);
 #endif
     }
 
@@ -418,9 +424,40 @@ int searchFrame(Mat &frame, Mat &frameHSV, Mat &colorRangeMask) {
   
 }
 
+void mouseHandler(int event, int x, int y, int flags, void* param) {
+  if (event == CV_EVENT_LBUTTONDOWN && !drag) {
+    top_point.x = x;
+    top_point.y = y;
+    bottom_point.x = x;
+    bottom_point.y = y;
+    target.x = 0;
+    target.y = 0;
+    drag = 1;
+  }
+  if (event == CV_EVENT_MOUSEMOVE && drag) {
+    bottom_point.x = x;
+    bottom_point.y = y;
+  }
+  if (event == CV_EVENT_LBUTTONUP) {
+    if (top_point.x > bottom_point.x) {
+      target.x = (int)(top_point.x - abs(bottom_point.x-top_point.x)/2);
+    } else {
+      target.x = (int)(top_point.x + abs(bottom_point.x-top_point.x)/2);
+    }
+    if (top_point.y > bottom_point.y) {
+      target.y = (int)(top_point.y - abs(bottom_point.y-top_point.y)/2);
+    } else {
+      target.y = (int)(top_point.y + abs(bottom_point.y-top_point.y)/2);
+    }
+    drag = 0;
+  }
+  if (event == CV_EVENT_RBUTTONUP) {
+    imshow("Result", frame);
+  }
+}
+
 int main( int argc, char** argv ) {
   
-  Mat frame;
   Size frame_size;    
   double cam_brightness, cam_contrast, cam_saturation, cam_gain;
 
@@ -461,7 +498,7 @@ int main( int argc, char** argv ) {
 
   // open video recording
 #if RECORD
-  record = VideoWriter("tennis_ballbot.mjpg", CV_FOURCC('M','J','P','G'), 25, frame_size, true);
+  record = VideoWriter("tennis_ballbot.mjpg", CV_FOURCC('M','J','P','G'), 17, frame_size, true);
   if( !record.isOpened() ) {
     printf("Recording failed to open!\n");
     return -1;
@@ -476,6 +513,8 @@ int main( int argc, char** argv ) {
   cap >> frame;
   Mat frameHSV(frame.size(), frame.type());
   Mat colorRangeMask(frame.size(), frame.type());
+  
+  imshow("Result", frame);
 
   while(1) {
 
@@ -502,6 +541,20 @@ int main( int argc, char** argv ) {
         break;
     }
     
+    setMouseCallback( "Result", mouseHandler, 0 );
+    
+    if (top_point.x != bottom_point.x && top_point.y != bottom_point.y) {
+      rectangle(frame, top_point, bottom_point, CV_RGB(255, 0, 0), 1, 8, 0);
+      if (target.x != 0 && target.y != 0) {
+         ellipse( frame, target, Size(10,10), 
+            0, 0, 360, Scalar(0,255,0), CV_FILLED, 8, 0);
+      }
+    }
+    
+#if DISPLAY_PIPELINE
+    imshow("Result", frame);
+#endif
+    
 #if RECORD
     frames.push_back(*(new Mat));
     frame.copyTo(frames[frames.size()-1]);
@@ -511,9 +564,9 @@ int main( int argc, char** argv ) {
     }*/
     stop++;
 #if RECORD
-    if(stop > 80) {
+    /*if(stop > 80) {
       break;
-    }
+    }*/
 #endif
   }
   
